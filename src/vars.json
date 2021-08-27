@@ -1,0 +1,7 @@
+{
+    "textfile": ["pptx", "docx", "xls", "xlsx", "ppt", "odt", "doc", "pdf"],
+    "imagefile": ["jpg", "jpeg", "png", "svg", "gif", "webp"],
+    "codefile": ["txt", "go", "py", "php", "js", "xjs", "c", "cpp", "class", "sh", "swift", "pl", "cgi", "cs", "java", "h", "vb", "lua", "ini", "css", "html"],
+    "vidfile": ["avi", "mp4", "mov", "wmv", "swf", "f4v", "mkv", "webm"],
+    "audiofile": ["m4a", "weba", "mp3", "wav", "flac"]
+}
