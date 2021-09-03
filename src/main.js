@@ -447,7 +447,7 @@ export function arrange() {
             var index = elem.indexOf(itemToFind);
             if (index > -1) {
                 var ea2 = elem[index]
-                fl.push(<Filecont name={ifempty(ea2.name)} size={ifempty(calcsize(ea2.size))} mime={ifempty(ea2.mime)} date={ea2.date} id={ea2.id} state={state} typ={ea2.typ} src={ea2.src}/>)
+                fl.push(<Filecont name={ifempty(ea2.name)} size={ifempty(calcsize(ea2.size))} mime={ifempty(ea2.mime)} date={ea2.date} id={ea2.id} state="row" typ={ea2.typ} src={ea2.src}/>)
             }
         }
         ReactDOM.unmountComponentAtNode(document.querySelector('.mainheader'))

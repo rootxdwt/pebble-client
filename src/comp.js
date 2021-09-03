@@ -37,18 +37,19 @@ export class Filecont extends React.Component {
         var imgwidth
         if(!this.props.src) {
             var a = this.props.name.split(".")[this.props.name.split(".").length - 1];
+            var base = "https://cdn.xdcs.me/static/main"
             if(vars.textfile.indexOf(a) != -1) {
-                icon = "https://xdcs.me/static/img/tesxt.png"
+                icon = base+"/tesxt.png"
             }else if(vars.imagefile.indexOf(a) != -1) {
-                icon = "https://xdcs.me/static/img/img.png"
+                icon = base+"/img.png"
             }else if(vars.codefile.indexOf(a) != -1) {
-                icon = "https://xdcs.me/static/img/code.png"
+                icon = base+"/code.png"
             }else if(vars.vidfile.indexOf(a) != -1) {
-                icon = "https://xdcs.me/static/img/vid.png"
+                icon = base+"/vid.png"
             }else if(vars.audiofile.indexOf(a) != -1){
-                icon="https://xdcs.me/static/img/mus.png"
+                icon = base+"/mus.png"
             }else {
-                icon="https://xdcs.me/static/img/ssa.png"
+                icon=base+"/ssa.png"
             }
         }else {
             icon = this.props.src
