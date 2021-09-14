@@ -123,7 +123,7 @@ class Leftmenubar extends React.Component {
             <g>
             </g>
             </svg>
-            <b className="exparea" id="share">Share</b>
+            <b className="exparea" id="share">Shared</b>
         </div>
       </div>
       </>
