@@ -23,7 +23,7 @@ export class Filecont extends React.Component {
         if(id.split(" ").length > 1 && window.innerWidth < 760) {
             gotofolder(inx[0] +" "+ parseInt(parseInt(inx[1]) + 1), this.props.name)
         }else if(id.split(" ").length == 1 && window.innerWidth < 760) {
-            newrvf(this.props.id, "0:5242928")
+            newrvf(this.props.id, "0:5242925")
         }else {
             for(var i=0;i<document.querySelectorAll(".leftclicked").length;i++) {
                 document.querySelectorAll(".leftclicked")[i].classList.remove("leftclicked")
@@ -97,7 +97,7 @@ export class Filecont extends React.Component {
         }else {
             return(
                 <>
-                <div className={'filecont ' + this.props.state} id={this.props.id} onClick={()=>this.singleclick(this.props.id)} onDoubleClick={()=> newrvf(this.props.id, "0:5242928")} onDrag={(e)=>this.dragstrt(e)}>
+                <div className={'filecont ' + this.props.state} id={this.props.id} onClick={()=>this.singleclick(this.props.id)} onDoubleClick={()=> newrvf(this.props.id, "0:5242925")} onDrag={(e)=>this.dragstrt(e)}>
         
                     <div className={'imagecontainer' + this.props.state}>
                     <img className={'filecontmb ' + this.props.state} src={icon} width={imgwidth} height={imgwidth} style={{borderRadius:"5px"}}/>

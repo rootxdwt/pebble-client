@@ -54,7 +54,7 @@ import ReactDOM from 'react-dom';
             const reader = new FileReader()
             reader.onloadend = function() {
               var buffer = reader.result;
-              var iv = crypto.getRandomValues(new Uint8Array(16));
+              var iv = crypto.getRandomValues(new Uint8Array(12));
               var salt = crypto.getRandomValues(new Uint8Array(16))
     
                   var pww = storedToken.slice(200);
@@ -77,13 +77,13 @@ import ReactDOM from 'react-dom';
                       }, 
     
                       impk,
-                      { "name": "AES-CBC", "length": 256},
+                      { "name": "AES-GCM", "length": 256},
                       false,
                       [ "encrypt", "decrypt" ]
     
                         ).then(function(key) {
                         crypto.subtle.encrypt({ 
-                          'name': 'AES-CBC',
+                          'name': 'AES-GCM',
                             iv 
                           }, key, buffer).then(function(encrypted) {
                             mobilenew("upchk").then(function() {
@@ -99,7 +99,6 @@ import ReactDOM from 'react-dom';
                             }
                           })
                             var tk = storedToken.slice(0,200);
-                            console.log(encode(encrypted))
                             var form = new FormData();
                             form.append('pfp', encode(encrypted)+"|"+encode(iv)+"|"+encode(salt));
                             xhr.setRequestHeader("Authorization", tk)
@@ -141,13 +140,13 @@ import ReactDOM from 'react-dom';
         }, 
   
         impk,
-        { "name": "AES-CBC", "length": 256},
+        { "name": "AES-GCM", "length": 256},
         false,
         [ "encrypt", "decrypt" ]
   
          ).then(function(key) {
           crypto.subtle.decrypt({ 
-            name: 'AES-CBC',
+            name: 'AES-GCM',
              iv: iv 
             }, key, f).then(function(decrypted) {
               

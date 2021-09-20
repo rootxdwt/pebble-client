@@ -39,21 +39,21 @@ function filedetail(file, id) {
 }
 
 async function encthumbnail(fdata, id) {
-    var iv = crypto.getRandomValues(new Uint8Array(16));
+    var iv = crypto.getRandomValues(new Uint8Array(12));
     var salt = crypto.getRandomValues(new Uint8Array(16));
     var fd = fdata
     var storedToken = await localforage.getItem("tk")
     var pww = storedToken.slice(200);
     let enc = new TextEncoder();
     var impk = await crypto.subtle.importKey("raw",enc.encode(pww), {name: "PBKDF2"},false,["deriveBits", "deriveKey"])
-    var key = await crypto.subtle.deriveKey({"name": "PBKDF2",salt: salt,"iterations": 100000,"hash": "SHA-256"   }, impk,{ "name": "AES-CBC", "length": 256},false,[ "encrypt", "decrypt" ])
-    var encrypted = await crypto.subtle.encrypt({'name': 'AES-CBC',iv }, key, fd)
+    var key = await crypto.subtle.deriveKey({"name": "PBKDF2",salt: salt,"iterations": 100000,"hash": "SHA-256"   }, impk,{ "name": "AES-GCM", "length": 256},false,[ "encrypt", "decrypt" ])
+    var encrypted = await crypto.subtle.encrypt({'name': 'AES-GCM',iv }, key, fd)
 
     encrypted = new Uint8Array(encrypted)
-    var fab = new Uint8Array(new Uint8Array(encrypted).length + 32)
+    var fab = new Uint8Array(new Uint8Array(encrypted).length + 28)
     fab.set(iv, 0)
-    fab.set(salt, 16)
-    fab.set(encrypted, 32)
+    fab.set(salt, 12)
+    fab.set(encrypted, 28)
     var finblob = new Blob([fab])
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "https://petadrop.com/api/thumbhandle/", true)
@@ -89,6 +89,12 @@ function updateProg(offset) {
         document.querySelectorAll(".progrezz")[1].value = offset
     }
 }
+
+export async function hash(algo, data) {
+    var digest = await window.crypto.subtle.digest(algo, data)
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+var filehashes = []
 async function onetime(i) {
 
     var file = document.querySelector('#fileinput').files[i];
@@ -105,18 +111,18 @@ async function onetime(i) {
     }
         var storedToken = await localforage.getItem("tk")
         var salt = crypto.getRandomValues(new Uint8Array(16))
-        var iv = crypto.getRandomValues(new Uint8Array(16))
+        var iv = crypto.getRandomValues(new Uint8Array(12))
         var pww = storedToken.slice(200);
         let enc = new TextEncoder();
-        var fkey = await crypto.subtle.generateKey({name: "AES-CBC",length: 256},true,["encrypt", "decrypt"])
+        var fkey = await crypto.subtle.generateKey({name: "AES-GCM",length: 256},true,["encrypt", "decrypt"])
         var keybuff = await crypto.subtle.exportKey("raw", fkey)
         var impk = await crypto.subtle.importKey("raw",enc.encode(pww),"PBKDF2",false,["deriveKey", "deriveBits"])
-        var derivedkey = await crypto.subtle.deriveKey({"name": "PBKDF2",salt: salt, "iterations": 100000, "hash": "SHA-256" }, impk, {"name": "AES-CBC", "length": 256 }, false, [ "encrypt", "decrypt" ])
-        var encryptedfn = await crypto.subtle.encrypt({ name: 'AES-CBC',iv: iv }, derivedkey, enc.encode(file.name))
+        var derivedkey = await crypto.subtle.deriveKey({"name": "PBKDF2",salt: salt, "iterations": 100000, "hash": "SHA-256" }, impk, {"name": "AES-GCM", "length": 256 }, false, [ "encrypt", "decrypt" ])
+        var encryptedfn = await crypto.subtle.encrypt({ name: 'AES-GCM',iv: iv }, derivedkey, enc.encode(file.name))
 
-            var keyiv = crypto.getRandomValues(new Uint8Array(16))
+            var keyiv = crypto.getRandomValues(new Uint8Array(12))
             crypto.subtle.encrypt(
-                {name: 'AES-CBC',
+                {name: 'AES-GCM',
                 iv: keyiv 
             }, derivedkey, keybuff).then(function(enc) {
 
@@ -125,16 +131,16 @@ async function onetime(i) {
                 var form = new FormData();
                 xhr.setRequestHeader("Authorization", storedToken.slice(0,200))
                 var enc = new Uint8Array(enc)
-                var findata = new Uint8Array(new Uint8Array(enc).length+32)
+                var findata = new Uint8Array(new Uint8Array(enc).length+28)
                 findata.set(salt, 0);
                 findata.set(keyiv, 16);
-                findata.set(enc, 32);
+                findata.set(enc, 28);
 
                 var enf = new Uint8Array(encryptedfn)
-                var fnfd = new Uint8Array(new Uint8Array(enf).length+32)
+                var fnfd = new Uint8Array(new Uint8Array(enf).length+28)
                 fnfd.set(salt, 0);
                 fnfd.set(iv, 16);
-                fnfd.set(enf, 32);
+                fnfd.set(enf, 28);
 
 
                 var string = encode(findata);
@@ -218,6 +224,7 @@ async function onetime(i) {
                 }
             })
     }
+    
     function calchunk(filelength) {
         var chunkcount
         chunkcount = parseInt(filelength / ((1024 * 1024)*5));
@@ -239,21 +246,23 @@ async function onetime(i) {
                     return;
                 }
                 var buffer = new Uint8Array(e.target.result);
-                        var iv = crypto.getRandomValues(new Uint8Array(16));
+                hash('SHA-256', buffer).then(function(h) {
+                    filehashes.push(h)
+                })
+                        var iv = crypto.getRandomValues(new Uint8Array(12));
                         crypto.subtle.encrypt({ 
-                            'name': 'AES-CBC',
+                            'name': 'AES-GCM',
                                 iv 
                             }, key, buffer) 
 
                         .then(encrypted => {
                                 var encrypted2 = new Uint8Array(encrypted)
-                                var findata = new Uint8Array(encrypted2.length+32)
+                                var findata = new Uint8Array(encrypted2.length+28)
                                 findata.set(iv, 0);
-                                findata.set(identify, 16);
-                                findata.set(encrypted2, 32);
+                                findata.set(identify, 12);
+                                findata.set(encrypted2, 28);
                                 var fffd = new Blob([findata])
-                                    window.crypto.subtle.digest('SHA-512', findata).then(function(digest) {
-                                        digest = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+                                hash('SHA-512', findata).then(function(digest) {
                                         
                                         findata = null
                                         encrypted2 = null
@@ -269,7 +278,7 @@ async function onetime(i) {
                                         xhr.upload.onprogress = function(e) {
                                             currentupload = e.loaded
                                             updateProg(((now + e.loaded)/file.size)*100)
-                                            if(RanFunc == false && (e.loaded/5242928)*100 > 65 && nth+1 <= calchunk(file.size)) {
+                                            if(RanFunc == false && (e.loaded/5242925)*100 > 65 && nth+1 <= calchunk(file.size)) {
                                                 fileadded( next_slice, nth+1 ,identify, key)
                                                 RanFunc = true
                                             }
@@ -292,10 +301,19 @@ async function onetime(i) {
                                                                 singlefile(identify, pfplink)
                                                                 updateProg(0)
                                                                 if(i == document.querySelector('#fileinput').files.length -1) {
+                                                                    var tx = new TextEncoder()
+                                                                    var encoded_addedhash = tx.encode(filehashes.join(''))
+                                                                    
+                                                                    window.crypto.subtle.digest('SHA-256', encoded_addedhash).then(function(final_filehash) {
+                                                                        final_filehash = Array.from(new Uint8Array(final_filehash)).map(b => b.toString(16).padStart(2, '0')).join('');
+                                                                        console.log(final_filehash)
+                                                                        filehashes = []
+                                                                    })
                                                                     ReactDOM.unmountComponentAtNode(document.querySelector("#ules"))
-                                                                    if(window.innerWidth > 760) {
-                                                                    }else {
+                                                                    try {
                                                                         mobilenew("bsc")
+                                                                    }
+                                                                    catch(e){
                                                                     }
                                                                 }else {
                                                                     onetime(i+1)
