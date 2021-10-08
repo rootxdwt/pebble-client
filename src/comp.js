@@ -9,8 +9,132 @@ import filename2prism from 'filename2prism';
 import localforage from 'localforage';
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { arta } from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import { AiOutlineLink } from "react-icons/ai";
 const vars = require('./vars.json')
+
+export class SharedArrangebar extends React.Component {
+    render() {
+        return(
+            <div className="file_align_control_bar">
+                <div className="align_by_name">
+                    <b>Name</b></div>
+                    <div className="align_not_name">
+                                <div className="pre_revoke">
+                                    <b>Revoke</b></div>
+                                    <div className="align_by_date">
+                                    <b>Date</b></div>
+                    </div>
+            </div>
+        )
+    }
+}
+
+export class SharedFileCont extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {revokestat: "Revoke", cls: ""}
+    }
+    async revoke() {
+        if(this.state.revokestat == "Revoke") {
+          this.setState({revokestat: "Revoking.."})
+          var form = new FormData()
+          form.append("target", this.props.id)
+          var storedToken = await localforage.getItem("tk")
+          var r = await fetch("https://petadrop.com/api/goshare", {method: 'DELETE', body: form, headers:{'Authorization': storedToken.slice(0, 200)}})
+          if(r.ok) {
+              var jsn = await r.json()
+              if(jsn.Status == "Success") {
+                 this.setState({cls: "hide"})
+              }
+          }
+            
+        }
+        
+    }
+    render() {
+        var icon
+        var imgwidth
+        if(!this.props.src) {
+            var a = this.props.name.split(".")[this.props.name.split(".").length - 1];
+            var base = "https://cdn.xdcs.me/static/main"
+            if(vars.textfile.indexOf(a) != -1) {
+                icon = base+"/tesxt.png"
+            }else if(vars.imagefile.indexOf(a) != -1) {
+                icon = base+"/img.png"
+            }else if(vars.codefile.indexOf(a) != -1) {
+                icon = base+"/code.png"
+            }else if(vars.vidfile.indexOf(a) != -1) {
+                icon = base+"/vid.png"
+            }else if(vars.audiofile.indexOf(a) != -1){
+                icon = base+"/mus.png"
+            }else {
+                icon=base+"/ssa.png"
+            }
+        }else {
+            icon = this.props.src
+        }
+        if(this.props.state == "row") {
+            imgwidth = "20px"
+        }else if(this.props.state == "") {
+            imgwidth = "50px"
+            if(this.props.src != "") {
+                imgwidth = "70px"
+            }
+        }
+        if(this.props.typ == "folder") {
+            var inx = this.props.id.split(" ")
+            return(
+                <>
+                <div className={'filecont ' + this.props.state +" "+ this.state.cls} id={this.props.id} onDoubleClick={()=>gotofolder(inx[0] +" "+ parseInt(parseInt(inx[1]) + 1), this.props.name)}>
+        
+                    <div className={'imagecontainer' + this.props.state}>
+                    <div className={'filecontmb ' + this.props.state} style={{borderRadius:"5px", background:"none"}}>
+                    <svg version="1.1" x="0px" y="0px" className="foldericon" viewBox="0 0 600 600">
+                    <g>
+                        <path className="st0" style={{fill:"#FFFFFF"}} d="M302.06,549.6c-64.67,0-129.35,0.1-194.02-0.03c-48.6-0.1-84.46-25.41-99.43-70.95
+                        c-3.19-9.7-4.39-20.45-4.43-30.73C3.86,357.02,3.76,266.16,4.07,175.3C4.32,105.16,58.61,51.11,128.85,50.43
+                        c19.51-0.19,39.02,0.02,58.53-0.05c42.78-0.15,77.05,17.23,103.2,50.66c3.81,4.87,7.56,6.26,13.36,6.24
+                        c63.87-0.18,127.74-0.1,191.61-0.12c37.49-0.02,67.42,14.66,88.27,46.15c9.59,14.48,15.6,30.58,15.64,48.17
+                        c0.22,83.64,1.14,167.3-0.09,250.92c-0.83,56.44-45.34,97-103.3,97.16C431.41,549.74,366.73,549.6,302.06,549.6z"/>
+                    </g>
+                    </svg>
+
+                    </div>
+                    </div>
+                  <div className={'label ' + this.props.state}>
+                      <p className= {'text ' + this.props.state}>{this.props.name}</p>
+                      <div className='filedetail'>
+                      <p className={'text ' + this.props.state} id='dtl'>Shared</p>
+                          <p className={'text ' + this.props.state} id='dtl'><div className="revokebtn">{this.state.revokestat}</div></p>
+                          <p className={'text ' + this.props.state} id='dtl'>{this.props.date}</p>
+                      </div>
+                  </div>
+                  <svg version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 100 100" width="20px" onClick={(e)=>rclick(e)} className={'fileoptiontdot ' + this.props.state}><circle cx="50" cy="17.5" r="9.92"></circle><circle cx="50.21" cy="49" r="9.92"></circle><circle cx="50" cy="80.51" r="9.92"></circle></svg>
+                </div>   
+                </>
+              )
+        }else {
+            return(
+                <>
+                <div className={'filecont ' + this.props.state +" "+ this.state.cls} id={this.props.id} onDoubleClick={()=> newrvf(this.props.id, "0:5242925")} onDrag={(e)=>this.dragstrt(e)}>
+        
+                    <div className={'imagecontainer' + this.props.state}>
+                    <img className={'filecontmb ' + this.props.state} src={icon} width={imgwidth} height={imgwidth} style={{borderRadius:"5px"}}/>
+                    </div>
+                  <div className={'label ' + this.props.state}>
+                      <p className= {'text ' + this.props.state}>{this.props.name}</p>
+                      <div className='filedetail'>
+                      <p className={'text ' + this.props.state} id='dtl'>Shared</p>
+                      <p className={'text ' + this.props.state} id='dtl'><div className="revokebtn" onClick={()=>this.revoke()}><b>{this.state.revokestat}</b></div></p>
+                          <p className={'text ' + this.props.state} id='dtl'>{this.props.date}</p>
+                      </div>
+                  </div>
+                  <svg version="1.1" id="Layer_1" x="0px" y="0px" viewBox="0 0 100 100" width="20px" onClick={(e)=>rclick(e)} className={'fileoptiontdot ' + this.props.state}><circle cx="50" cy="17.5" r="9.92"></circle><circle cx="50.21" cy="49" r="9.92"></circle><circle cx="50" cy="80.51" r="9.92"></circle></svg>
+                </div>   
+                </>
+              )
+        }
+    }
+}
 export class Filecont extends React.Component {
     dragstrt(e) {
         e.preventDefault();
@@ -115,18 +239,6 @@ export class Filecont extends React.Component {
                 </>
               )
         }
-    }
-}
-export class SharedFileCont extends React.Component {
-    constructor(props) {
-        super(props)
-    }
-    render() {
-        return (
-            <>
-            <AiOutlineLink />
-            </>
-        )
     }
 }
 export class Arrangebar extends React.Component {

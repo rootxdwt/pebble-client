@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import {eclickdetector} from './index'
 import {processpfp} from './pfphandler'
 import {mobilenew} from './index'
-import {Filecont, Overlay, Arrangebar, Dir, Alignicon, Mobilemenubtn, Group, Button, Searchico, Pfp, Lpfpmenu} from './comp'
+import {Filecont, Overlay, Arrangebar, Dir, Alignicon, Mobilemenubtn, Group, Button, Searchico, Pfp, Lpfpmenu, SharedArrangebar, SharedFileCont} from './comp'
 import { encode, decode } from 'base64-arraybuffer';
 import localforage from 'localforage';
 import {uploadworker} from './uploadhandler.js'
@@ -434,12 +434,11 @@ export function arrange() {
         var storedToken = await localforage.getItem("tk")
         let resp = await fetch("https://petadrop.com/api/udfetch",{method: 'POST', headers:{'Authorization': storedToken.slice(0,200), 'x-xwc-act': 'getshared'}})
         var json = await resp.json()
-        console.log(json["Links"].length)
         var fl=[]
         if(localStorage.getItem("arrange") == 1) {
-            fl.push(<Arrangebar />)
+            fl.push(<SharedArrangebar />)
         }else if(localStorage.getItem("arrange") == 0) {
-            fl.unshift(<Arrangebar />)
+            fl.unshift(<SharedArrangebar />)
         }
         for(var i=0;i<json["Links"].length; i++) {
             var nthJson = JSON.parse(json["Links"][i])
@@ -447,7 +446,7 @@ export function arrange() {
             var index = elem.indexOf(itemToFind);
             if (index > -1) {
                 var ea2 = elem[index]
-                fl.push(<Filecont name={ifempty(ea2.name)} size={ifempty(calcsize(ea2.size))} mime={ifempty(ea2.mime)} date={ea2.date} id={ea2.id} state="row" typ={ea2.typ} src={ea2.src}/>)
+                fl.push(<SharedFileCont name={ifempty(ea2.name)} size={ifempty(calcsize(ea2.size))} mime={ifempty(ea2.mime)} date={ea2.date} id={ea2.id} state="row" typ={ea2.typ} src={ea2.src}/>)
             }
         }
         ReactDOM.unmountComponentAtNode(document.querySelector('.mainheader'))

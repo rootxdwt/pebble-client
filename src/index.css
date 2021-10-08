@@ -83,7 +83,9 @@ body::-webkit-scrollbar {
     font-size: 10pt;
     margin-right: 10px;
 }
+
 .sharebackground {
+    background-color: rgba(0, 0, 0, 0.5);
     width: 100%;
     height: 100%;
     position: fixed;
@@ -92,18 +94,20 @@ body::-webkit-scrollbar {
     display:-webkit-flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(7px);
-    -webkit-backdrop-filter: blur(7px);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     animation: slight_blur 0.2s ease-in-out;
 }
 @keyframes slight_blur {
     0% {
         backdrop-filter: blur(0px);
         -webkit-backdrop-filter: blur(0px);
+        background-color: rgba(0, 0, 0, 0);
     }
     100% {
-        backdrop-filter: blur(7px);
-        -webkit-backdrop-filter: blur(7px);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        background-color: rgba(0, 0, 0, 0.5);
     }
 }
 .sharearea {
@@ -543,7 +547,12 @@ path {
     margin-top: 0;
     background-color: transparent;
     font-size: 10pt;
-    transition: none;
+}
+.filecont.row.hide {
+    height: 0px;
+    overflow: hidden;
+    transition: height 0.1s ease-in-out, border 0.1s ease-in-out;
+    border: 0px;
 }
 .filecont.leftclicked {
     background-color: rgba(255, 255, 255, 0.3);
@@ -805,7 +814,7 @@ input[type="file"] {
     display: none;
 }
 .rclickmenu {
-    width: 150px;
+    width: 140px;
     height: auto;
     background-color: var(--menu-color);
     box-shadow: 0px 0px 1px rgb(10, 10, 10);
@@ -835,6 +844,7 @@ input[type="file"] {
     display: flex;
     display:-webkit-flex;
     flex-direction: row;
+    font-size: 10pt;
     align-items: center;
     justify-content: center;
     cursor: pointer;
@@ -1060,6 +1070,15 @@ input[type="file"] {
     display: flex;
     display:-webkit-flex;
 }
+.pre_revoke {
+    width: 100px;
+    margin-left: 20px;
+    height: 100%;
+    cursor: pointer;
+    align-items: center;
+    display: flex;
+    display:-webkit-flex;
+}
 .align_by_date {
     width: 111px;
     margin-left: 20px;
@@ -1107,6 +1126,16 @@ input[type="file"] {
     background-color: var(--body-bg-color);
     border-radius: 7px;
     border: none;
+  }
+  .revokebtn {
+    color: #943636;
+    border-radius: 5px;
+    background-color: var(--menu-color);
+    width: auto;
+    text-align: center;
+  }
+  .revokebtn:hover {
+      background-color: var(--body-bg-color);
   }
   p.uploaderlabel {
     padding: 0;
@@ -1629,6 +1658,12 @@ height: 100%;
         margin-left: 2.3%;
         width: 95%;
         height: 60px;
+    }
+    .filecont.row.hide {
+        height: 0px;
+        overflow: hidden;
+        transition: height 0.1s ease-in-out, border 0.1s ease-in-out;
+        border: 0px;
     }
     .filecont.row:hover {
         background-color: inherit;   
