@@ -4,6 +4,7 @@ import {decryptFromPw} from './main'
 import ReactDOM from 'react-dom';
 import { decode } from 'base64-arraybuffer';
 import localforage from 'localforage';
+import {hash} from './uploadhandler'
 const vars = require('./vars.json')
 
 let finaldecryptedfd
@@ -27,7 +28,7 @@ async function defaultlp(element, range) {
     prexhr.send(preform)
 }
 export function OnlyDownload(element) {
-    defaultlp(element, "0:5242928")
+    defaultlp(element, "0:5242925")
 }
 
 export function rvf(element, range) {
@@ -83,18 +84,18 @@ async function precallback(data, element) {
     var decer = new TextDecoder();
     var fnbuffer = decode(data.Name)
     var salt = fnbuffer.slice(0,16);
-    var iv = fnbuffer.slice(16,32);
-    var realname = fnbuffer.slice(32);
+    var iv = fnbuffer.slice(16,28);
+    var realname = fnbuffer.slice(28);
     var dec1 = await decryptFromPw(storedToken.slice(200), iv, salt, realname)
 
     var encryptedfileheader = decode(data.Filekey);
 
     var salt = encryptedfileheader.slice(0, 16)
-    var iv = encryptedfileheader.slice(16, 32)
-    var encryptedfilekey = encryptedfileheader.slice(32)
+    var iv = encryptedfileheader.slice(16, 28)
+    var encryptedfilekey = encryptedfileheader.slice(28)
     var dec = await decryptFromPw(storedToken.slice(200), iv, salt, encryptedfilekey)
 
-    var importedkey = await crypto.subtle.importKey("raw", dec,{name: 'AES-CBC'},false,["encrypt", "decrypt"])
+    var importedkey = await crypto.subtle.importKey("raw", dec,{name: 'AES-GCM'},false,["encrypt", "decrypt"])
     var filetype = decer.decode(dec1).split('.');
     var fileextension
     if(vars.imagefile.indexOf(filetype[filetype.length - 1].toLowerCase()) !== -1) {
@@ -118,7 +119,7 @@ async function precallback(data, element) {
             document.querySelector("#fileloadingtxt").innerText= "Preparing.."
         }
         var nth = 0
-        viewfile(element, (((1024 * 1024)*5) + 48)*(nth)+":"+(((1024 * 1024)*5) + 48)*(nth+1), importedkey, decer.decode(dec1), data.Mime, nth, fileextension, true, data.Size)
+        viewfile(element, (((1024 * 1024)*5) + 45)*(nth)+":"+(((1024 * 1024)*5) + 45)*(nth+1), importedkey, decer.decode(dec1), data.Mime, nth, fileextension, true, data.Size)
 }
 function calchunk(filelength) {
     var chunkcount
@@ -132,15 +133,16 @@ var currentupload = 0;
 var now = 0;
 var finalblob = new Blob([])
 var bloblist = []
+var hashlist = []
 async function viewfile(element, range, deckey, filename, filemime, nth, extension, instantsave, originalfilesize) {
     var storedToken = await localforage.getItem("tk")
 
     async function processfile(data) {
     var file = data
     var aB = new Uint8Array(file)
-    var fileiv = aB.slice(0, 16)
-    var encfile = aB.slice(32)
-    var decryptedfiledata = await crypto.subtle.decrypt({name: 'AES-CBC', iv: fileiv}, deckey, encfile)
+    var fileiv = aB.slice(0, 12)
+    var encfile = aB.slice(28)
+    var decryptedfiledata = await crypto.subtle.decrypt({name: 'AES-GCM', iv: fileiv}, deckey, encfile)
     finishlist.push(nth)
         if(instantsave == false) {
             finaldecryptedfd.set(new Uint8Array(decryptedfiledata), parseInt(((1024 * 1024)*5)+1)*(nth))
@@ -160,10 +162,14 @@ async function viewfile(element, range, deckey, filename, filemime, nth, extensi
             }
         }else if(instantsave == true) {
             var newu8 = new Uint8Array(decryptedfiledata)
+            var chunkhash = await hash("SHA-256", newu8)
+            hashlist.push(chunkhash)
             var preblob = new Blob([newu8])
             bloblist[nth] = preblob
             finalblob = new Blob(bloblist)
             if(finalblob.size == originalfilesize) {
+                console.log(await hash("SHA-256", new TextEncoder().encode(hashlist.join(''))))
+                hashlist = []
                 var finurl = URL.createObjectURL(new Blob([finalblob], {type: filemime}))
                 document.querySelector(".fileviewer").classList.remove("show")
                 currentlyrendered.push(JSON.stringify({id : element, blob :finurl, name : filename, ext : extension, mime : filemime}))
@@ -208,8 +214,8 @@ async function viewfile(element, range, deckey, filename, filemime, nth, extensi
         if(stopped.length == 0) {
             currentupload = e.loaded
             document.querySelector("#fileloadingtxt").innerText=  "Downloaded " + Math.round(((now+currentupload)/originalfilesize)*100) + "%"
-            if(RanFunc == false && (e.loaded/5242928)*100 > 10) {
-                viewfile(element, (((1024 * 1024)*5) + 48)*(nth+1)+":"+(((1024 * 1024)*5) + 48)*(nth+2), deckey, filename, filemime, nth+1, extension, instantsave, originalfilesize)
+            if(RanFunc == false && (e.loaded/5242925)*100 > 10) {
+                viewfile(element, (((1024 * 1024)*5) + 45)*(nth+1)+":"+(((1024 * 1024)*5) + 45)*(nth+2), deckey, filename, filemime, nth+1, extension, instantsave, originalfilesize)
                 RanFunc = true
             }
         }else {

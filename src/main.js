@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import {eclickdetector} from './index'
 import {processpfp} from './pfphandler'
 import {mobilenew} from './index'
-import {Filecont, Overlay, Arrangebar, Dir, Alignicon, Mobilemenubtn, Group, Button, Searchico, Pfp, Lpfpmenu} from './comp'
+import {Filecont, Overlay, Arrangebar, Dir, Alignicon, Mobilemenubtn, Group, Button, Searchico, Pfp, Lpfpmenu, SharedArrangebar, SharedFileCont} from './comp'
 import { encode, decode } from 'base64-arraybuffer';
 import localforage from 'localforage';
 import {uploadworker} from './uploadhandler.js'
@@ -231,9 +231,9 @@ export function arrange() {
     export async function decryptFromPw(pw, iv, salt, data) {
         var encodedpw = new TextEncoder().encode(pw)
         var importedKey = await crypto.subtle.importKey("raw", encodedpw, "PBKDF2", false, ["deriveKey", "deriveBits"])
-        var derivedKey = await crypto.subtle.deriveKey({"name": "PBKDF2", salt: salt, "iterations": 100000, "hash": "SHA-256"}, importedKey, { "name": "AES-CBC", "length": 256}, false, [ "encrypt", "decrypt" ])
+        var derivedKey = await crypto.subtle.deriveKey({"name": "PBKDF2", salt: salt, "iterations": 100000, "hash": "SHA-256"}, importedKey, { "name": "AES-GCM", "length": 256}, false, [ "encrypt", "decrypt" ])
         try {
-            var decData = await crypto.subtle.decrypt({name: 'AES-CBC', iv: iv}, derivedKey, data)
+            var decData = await crypto.subtle.decrypt({name: 'AES-GCM', iv: iv}, derivedKey, data)
             return decData
         }
         catch(decryptionErr) {
@@ -299,8 +299,8 @@ export function arrange() {
                     var folders = JSON.parse(res.Folder[nth])
                     var encryptedname = decode(folders.Name)
                     var salt = new Uint8Array(encryptedname.slice(0, 16))
-                    var iv = new Uint8Array(encryptedname.slice(16, 32))
-                    var realdata2 = new Uint8Array(encryptedname.slice(32))
+                    var iv = new Uint8Array(encryptedname.slice(16, 28))
+                    var realdata2 = new Uint8Array(encryptedname.slice(28))
                     try {
                         var decdata = await decryptFromPw(pww, iv, salt, realdata2)
                         var dec = new TextDecoder();
@@ -342,10 +342,10 @@ export function arrange() {
                                         async function tmbloop(i) {
                                             var fid = JSON.parse(JSON.parse(xhr.response).Finaldta[i]).Id
                                             var raw = decode(JSON.parse(JSON.parse(xhr.response).Finaldta[i]).Thumb)
-                                            var iv=raw.slice(0, 16);
-                                            var salt=raw.slice(16, 32);
+                                            var iv=raw.slice(0, 12);
+                                            var salt=raw.slice(12, 28);
                                             var storedToken = await localforage.getItem("tk")
-                                            var fle = raw.slice(32)
+                                            var fle = raw.slice(28)
                                             var decrypted = await decryptFromPw(storedToken.slice(200), iv, salt, fle)
                                             var url = URL.createObjectURL(new Blob([decrypted], {type: "image/jpeg"}))
                                             var v = elem.findIndex(function(item) {return item.id === fid})
@@ -371,11 +371,11 @@ export function arrange() {
                     var finalfiledata = JSON.parse(res.File[datadecnth])
                     var fnbuffer = decode(finalfiledata.Name)
                     var salt = fnbuffer.slice(0,16);
-                    var iv = fnbuffer.slice(16,32);
-                    var realname = fnbuffer.slice(32);
+                    var iv = fnbuffer.slice(16,28);
+                    var realname = fnbuffer.slice(28);
                     var impk = await crypto.subtle.importKey("raw", enc.encode(storedToken.slice(200)), "PBKDF2", false, ["deriveKey", "deriveBits"])
-                    var derivedkey = await crypto.subtle.deriveKey({"name": "PBKDF2",salt: salt,"iterations": 100000, "hash": "SHA-256"}, impk, { name: "AES-CBC", length: 256},false,[ "encrypt", "decrypt" ])
-                    var dec = await crypto.subtle.decrypt({name: 'AES-CBC',iv: iv}, derivedkey, realname)
+                    var derivedkey = await crypto.subtle.deriveKey({"name": "PBKDF2",salt: salt,"iterations": 100000, "hash": "SHA-256"}, impk, { name: "AES-GCM", length: 256},false,[ "encrypt", "decrypt" ])
+                    var dec = await crypto.subtle.decrypt({name: 'AES-GCM',iv: iv}, derivedkey, realname)
                     elem.push({name : decer.decode(dec), size : finalfiledata.Size, mime : finalfiledata.Mime, date : convert_timezone(finalfiledata.Date), id : finalfiledata.Id, state : state, dir : finalfiledata.Dir, src: ""})
                     if(res.Folder != null) {
                         percentage = elem.length/(res.File.length + res.Folder.length)
@@ -434,12 +434,11 @@ export function arrange() {
         var storedToken = await localforage.getItem("tk")
         let resp = await fetch("https://petadrop.com/api/udfetch",{method: 'POST', headers:{'Authorization': storedToken.slice(0,200), 'x-xwc-act': 'getshared'}})
         var json = await resp.json()
-        console.log(json["Links"].length)
         var fl=[]
         if(localStorage.getItem("arrange") == 1) {
-            fl.push(<Arrangebar />)
+            fl.push(<SharedArrangebar />)
         }else if(localStorage.getItem("arrange") == 0) {
-            fl.unshift(<Arrangebar />)
+            fl.unshift(<SharedArrangebar />)
         }
         for(var i=0;i<json["Links"].length; i++) {
             var nthJson = JSON.parse(json["Links"][i])
@@ -447,7 +446,7 @@ export function arrange() {
             var index = elem.indexOf(itemToFind);
             if (index > -1) {
                 var ea2 = elem[index]
-                fl.push(<Filecont name={ifempty(ea2.name)} size={ifempty(calcsize(ea2.size))} mime={ifempty(ea2.mime)} date={ea2.date} id={ea2.id} state="row" typ={ea2.typ} src={ea2.src}/>)
+                fl.push(<SharedFileCont name={ifempty(ea2.name)} size={ifempty(calcsize(ea2.size))} mime={ifempty(ea2.mime)} date={ea2.date} id={ea2.id} state="row" typ={ea2.typ} src={ea2.src}/>)
             }
         }
         ReactDOM.unmountComponentAtNode(document.querySelector('.mainheader'))
@@ -570,20 +569,20 @@ export function arrange() {
             var name = document.querySelector("#folder_name_cont").value
             if(name.length > 0) {
             var salt = crypto.getRandomValues(new Uint8Array(16))
-            var iv = crypto.getRandomValues(new Uint8Array(16))
+            var iv = crypto.getRandomValues(new Uint8Array(12))
             let storedToken = await localforage.getItem("tk")
             var pww = storedToken.slice(200);
             var enc = new TextEncoder()
             try {
                 var impk = await crypto.subtle.importKey("raw",enc.encode(pww),"PBKDF2",false,["deriveKey", "deriveBits"])
-                var derivedkey = await crypto.subtle.deriveKey({"name": "PBKDF2",salt: salt, "iterations": 100000, "hash": "SHA-256" }, impk, {"name": "AES-CBC", "length": 256 }, false, [ "encrypt", "decrypt" ])
-                var encryptedfn = await crypto.subtle.encrypt({ name: 'AES-CBC',iv: iv }, derivedkey, enc.encode(name))
+                var derivedkey = await crypto.subtle.deriveKey({"name": "PBKDF2",salt: salt, "iterations": 100000, "hash": "SHA-256" }, impk, {"name": "AES-GCM", "length": 256 }, false, [ "encrypt", "decrypt" ])
+                var encryptedfn = await crypto.subtle.encrypt({ name: 'AES-GCM',iv: iv }, derivedkey, enc.encode(name))
 
                 encryptedfn = new Uint8Array(encryptedfn)
-                var finbuf = new Uint8Array(encryptedfn.length + 32)
+                var finbuf = new Uint8Array(encryptedfn.length + 28)
                 finbuf.set(salt, 0)
                 finbuf.set(iv, 16)
-                finbuf.set(encryptedfn, 32)
+                finbuf.set(encryptedfn, 28)
                 var form = new FormData();
                 form.append("curentdirindex", curdir.split(" ")[0] +" "+ ( parseInt(curdir.split(" ")[1])))
                 form.append("name", encode(finbuf))
@@ -616,9 +615,15 @@ export function arrange() {
             var response = await fetch('https://petadrop.com/api/udfetch', {method: 'POST', body: form, headers:{'X-XWC-act': 'of', 'Authorization': storedToken.slice(0, 200)}})
             let rJson = await response.json()
             let originAb = decode(rJson.Name)
-            var encryptedData = new Uint8Array(originAb.slice(32))
+            var encryptedData = new Uint8Array(originAb.slice(28))
             var salt = new Uint8Array(originAb.slice(0, 16))
-            var iv = new Uint8Array(originAb.slice(16, 32))
+            var iv = new Uint8Array(originAb.slice(16, 28))
+            var state;
+            if(localStorage.getItem("arrange") == 1) {
+                state = "row"
+            }else {
+                state = ""
+            }
             try {
                 var decData = await decryptFromPw(storedToken.slice(200), iv, salt, encryptedData)
                 var dec = new TextDecoder();
@@ -667,8 +672,8 @@ export function arrange() {
                         var folders = JSON.parse(json.Folder[nth])
                         var encryptedname = decode(folders.Name)
                         var salt = new Uint8Array(encryptedname.slice(0, 16))
-                        var iv = new Uint8Array(encryptedname.slice(16, 32))
-                        var realdata2 = new Uint8Array(encryptedname.slice(32))
+                        var iv = new Uint8Array(encryptedname.slice(16, 28))
+                        var realdata2 = new Uint8Array(encryptedname.slice(28))
                         var decdata = await decryptFromPw(storedToken.slice(200), iv, salt, realdata2)
                         var dec = new TextDecoder();
                         elem.push({name : dec.decode(decdata), size : folders.Size, mime : "N/A", date : convert_timezone(folders.Date), id : folders.Fid + " " +folders.Index.split(" ")[1], state : state, typ: "folder", dir : folders.Index}) 
@@ -688,8 +693,8 @@ export function arrange() {
                     var finalfiledata = JSON.parse(json.File[datadecnth])
                     var fnbuffer = decode(finalfiledata.Name)
                     var salt = fnbuffer.slice(0,16);
-                    var iv = fnbuffer.slice(16,32);
-                    var realname = fnbuffer.slice(32);
+                    var iv = fnbuffer.slice(16,28);
+                    var realname = fnbuffer.slice(28);
                     var dec = await decryptFromPw(storedToken.slice(200), iv, salt, realname)
                     elem.push({name : decer.decode(dec), size : finalfiledata.Size, mime : finalfiledata.Mime, date : convert_timezone(finalfiledata.Date), id : finalfiledata.Id, state : state, dir : finalfiledata.Dir, src : insertedTmb})
                     if(datadecnth < json.File.length -1) {
